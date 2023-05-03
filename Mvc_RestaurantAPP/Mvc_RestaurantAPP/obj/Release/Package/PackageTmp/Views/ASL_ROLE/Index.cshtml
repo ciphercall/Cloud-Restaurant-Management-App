@@ -1,0 +1,201 @@
+﻿@using System.Web.Services.Discovery
+@using Mvc_RestaurantAPP.Models
+@model Mvc_RestaurantAPP.Models.RoleModel
+
+@{
+    ViewBag.Title = "Index";
+
+    var LoggedUserTp = HttpContext.Current.Session["LoggedUserType"].ToString();
+    var LoggedUserStatus = HttpContext.Current.Session["LoggedUserStatus"].ToString();
+
+    if ((LoggedUserTp == "CompanyAdmin" || LoggedUserTp == "UserAdmin") && LoggedUserStatus == "A")
+    {
+
+    }
+    else
+    {
+        Response.Redirect(Url.Action("Index", "Login"));
+    } 
+    
+    
+    
+    var LoggedCompId = HttpContext.Current.Session["loggedCompID"].ToString();
+    RestaurantDbContext db = new RestaurantDbContext();
+
+
+    //User ID: [ ] , Login ID Field loaded in DropdownList
+    Int64 compid = Convert.ToInt64(System.Web.HttpContext.Current.Session["loggedCompID"]);
+    List<SelectListItem> aslUsercos = new List<SelectListItem>();
+    var result = (from n in db.AslUsercoDbSet
+                  where n.COMPID == compid
+                  select n).ToList();
+
+    foreach (var n in result)
+    {
+        AslUserco aslUserco = db.AslUsercoDbSet.FirstOrDefault(e => e.USERID == n.USERID);
+        aslUsercos.Add(new SelectListItem { Text = aslUserco.LOGINID, Value = aslUserco.USERID.ToString() });
+    }
+
+
+    //Module Name:[ ] , Module Name Field Loaded in DropdownList
+    List<SelectListItem> listModuleName = new List<SelectListItem>();
+    var resultModule = (from n in db.AslMenumstDbSet select n).ToList();
+
+    foreach (var n in resultModule)
+    {
+        ASL_MENUMST aslModuleId = db.AslMenumstDbSet.FirstOrDefault(e => e.MODULEID == n.MODULEID);
+        listModuleName.Add(new SelectListItem { Text = aslModuleId.MODULENM, Value = aslModuleId.MODULEID });
+    }
+
+
+    //Menu Type: [ ] , Menu Type Field Loaded in DropdownList
+    List<SelectListItem> listMenu = new List<SelectListItem>();
+    listMenu.Add(new SelectListItem { Text = "FORMS", Value = "F" });
+    listMenu.Add(new SelectListItem { Text = "REPORTS", Value = "R" });
+
+}
+
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(true)
+
+    @Html.HiddenFor(model => model.AslUserco.COMPID, new { @Value = LoggedCompId })
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-2"></div>
+            <div class="col-md-8">
+                <div class="panel panel-info">
+                    <div class="panel-heading text-center">
+                        <h2>Permission Menu for User List</h2>
+                    </div>
+                </div>
+
+                <div class="jumbotron">
+                    <div class="form-group">
+
+
+                        <div class="row">
+                            <div class="col-md-3">
+                                @Html.Label("name", "User ID", htmlAttributes: new { @class = "control-label" })
+                            </div>
+                            <div class="col-md-8">
+                                @Html.DropDownListFor(model => model.AslRole.USERID, aslUsercos, "--Select Login ID--", new { id = "txtUserNameID", @class = "form-control" })
+                                @*@Html.ValidationMessageFor(model => model.AslUserco.USERNM, "", new { @class = "text-danger" })*@
+
+                            </div>
+                        </div>
+
+                        <br />
+                        <div class="row">
+                            <div class="col-md-3">
+                                @Html.Label("name", "Selected User Name", new { @class = "control-label" })
+                            </div>
+                            <div class="col-md-8">
+                                @Html.TextBoxFor(model => model.AslUserco.USERNM, new { id = "userNameID", @class = "form-control", @readonly = "readonly" })
+                            </div>
+                        </div>
+
+
+
+                        <br />
+                        <div class="row">
+                            <div class="col-md-3">
+                                @Html.Label("name", "Module Name", htmlAttributes: new { @class = "control-label" })
+                            </div>
+                            <div class="col-md-8">
+                                @Html.DropDownListFor(model => model.AslMenumst.MODULENM, listModuleName, "--Select Menu--", new { @class = "form-control", id = "txtModuleNm" })
+                                @*@Html.ValidationMessageFor(model => model.AslMenumst.MODULENM, "", new { @class = "text-danger" })*@
+                            </div>
+                        </div>
+
+                        <br />
+                        <div class="row">
+                            <div class="col-md-3">
+                                @Html.LabelFor(model => model.AslMenu.MENUTP, htmlAttributes: new { @class = "control-label" })
+                            </div>
+                            <div class="col-md-8">
+                                @Html.DropDownListFor(model => model.AslMenu.MENUTP, listMenu, "--Select Menu--", htmlAttributes: new { id = "menuTypeID", @class = "form-control" })
+                                @*@Html.ValidationMessageFor(model => model.AslMenu.MENUTP, "", new { @class = "text-danger" })*@
+                            </div>
+                        </div>
+
+                        @if (ViewBag.ErrorFieldMessage != null)
+                        {
+                               
+                            <div class="row">
+                                <div class="col-md-3"></div>
+                                <div class="col-md-8">
+                                    <h6 style="color: #C03523">@ViewBag.ErrorFieldMessage<i style="color: #C03523" class="fa fa-question-circle fa-2x"></i></h6>
+                                </div>
+                            </div>
+                     
+                        }
+                        <br />
+                        <div class="row">
+                            <div class="col-md-3"></div>
+                            <div class="col-md-8">
+                                <input type="submit" class="btn btn-info" value="Search Permission Filter" />
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+                <div id="role_Data">
+                    <table id="rolegrid"></table>
+                    <div id="pager"></div>
+                </div>
+            </div>
+            <div class="col-md-2"></div>
+        </div>
+
+    </div>
+
+
+
+    <script type="text/javascript">
+        $(function () {
+
+            //1. User Name: [    ]
+            $('#txtUserNameID').change(function () {
+                //When the UserName (Dropdown list) changed then get the "User ID" from "ASLUSERCO" table
+                var changedDropDown = $('#txtUserNameID option:selected').val();
+                var ddlBoxuserName = document.getElementById('userNameID');
+
+                // when the value of the User Name field changes update the Select "UserName" field
+                $("#userNameID").val("Please Select the 'User ID'");
+                $("#txtModuleNm").val("--Select Module--");
+                $("#menuTypeID").val("--Select Menu--");
+
+                $.getJSON(
+                   "/ASL_ROLE/UserNameChanged_Name", { "ChangedDropDown": changedDropDown },
+                   function (myData) {
+                       ddlBoxuserName.value = myData;
+                       document.getElementById("txtModuleNm").focus();
+                   });
+
+            });
+
+            //2. Module Name: [    ]
+            $("#txtModuleNm").change(function () {
+                $("#menuTypeID").focus();
+                // when the value of the Module Name field changes update the Dropdown list field
+                $("#menuTypeID").val("--Select Menu--");
+
+            });
+
+        });
+    </script>
+
+}
+
+<link href="~/Content/themes/base/jquery-ui.css" rel="stylesheet" />
+<link href="~/Content/jquery.jqGrid/ui.jqgrid.css" rel="stylesheet" />
+<script src="~/Scripts/jquery-1.9.1.min.js"></script>
+<script src="~/Scripts/jquery-ui-1.10.4.min.js"></script>
+<script src="~/Scripts/i18n/grid.locale-en.js"></script>
+<script src="~/Scripts/jquery.jqGrid.min.js"></script>
+@* Grid view Script ,that means Grid View Table *@
+<script src="~/Scripts/_roleAsL.js"></script>

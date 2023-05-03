@@ -1,0 +1,120 @@
+﻿@model IEnumerable<Mvc_RestaurantAPP.Models.RMS_ITEM>
+
+@{
+    ViewBag.Title = "ShowItemList";
+
+    if (HttpContext.Current.Session["LoggedUserType"] == null)
+    {
+        Response.Redirect(Url.Action("Index", "Login"));
+    }
+    
+    var LoggedUserTp = HttpContext.Current.Session["LoggedUserType"].ToString();
+    var LoggedUserStatus = HttpContext.Current.Session["LoggedUserStatus"].ToString();
+    var LoggedCompanyStatus = HttpContext.Current.Session["LoggedCompanyStatus"].ToString();
+    
+    if ((LoggedUserTp == "CompanyAdmin" || LoggedUserTp == "UserAdmin") && LoggedUserStatus == "A" && LoggedCompanyStatus == "A")
+    {
+
+    }
+    else
+    {
+        Response.Redirect(Url.Action("Index", "Login"));
+    } 
+
+
+}
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-2"></div>
+        <div class="col-md-8">
+            <div class="panel panel-info">
+                <div class="panel-heading text-center">
+                    <h2> Show all Item Information</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="table-responsive">
+    <table class="table table-striped">
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.COMPID)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CATID)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ITEMID)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ITEMNM)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.BRAND)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.UNIT)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.BUYRT)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.SALRT)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.STKMIN)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.DISCOUNT)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.REMARKS)
+            </th>
+            <th></th>
+        </tr>
+
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.COMPID)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.CATID)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.ITEMID)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.ITEMNM)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.BRAND)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.UNIT)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.BUYRT)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.SALRT)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.STKMIN)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.DISCOUNT)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.REMARKS)
+                </td>
+            </tr>
+        }
+
+    </table>
+</div>

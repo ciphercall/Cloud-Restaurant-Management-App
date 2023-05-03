@@ -1,0 +1,143 @@
+﻿@using Mvc_RestaurantAPP.Models
+@model Mvc_RestaurantAPP.Models.BillingReportViewModel
+
+
+@{
+    ViewBag.Title = "SalesStatementDetails";
+
+    if (HttpContext.Current.Session["LoggedUserType"] == null)
+    {
+        Response.Redirect(Url.Action("Index", "Login"));
+    }
+    
+    var LoggedUserTp = HttpContext.Current.Session["LoggedUserType"].ToString();
+    var LoggedUserStatus = HttpContext.Current.Session["LoggedUserStatus"].ToString();
+    var LoggedCompanyStatus = HttpContext.Current.Session["LoggedCompanyStatus"].ToString();
+
+    if ((LoggedUserTp == "CompanyAdmin" || LoggedUserTp == "UserAdmin" || LoggedUserTp == "User") && LoggedUserStatus == "A" && LoggedCompanyStatus == "A")
+    {
+
+    }
+    else
+    {
+        Response.Redirect(Url.Action("Index", "Login"));
+    }
+
+    Int64 compid = Convert.ToInt64(System.Web.HttpContext.Current.Session["loggedCompID"]);
+
+}
+
+
+<link href="~/Content/bootstrap%20datepicker%20css/datepicker.css" rel="stylesheet" />
+<link href="~/Content/bootstrap%20datepicker%20css/datepicker3.css" rel="stylesheet" />
+
+<script src="~/Scripts/bootstrap-datepicker.js"></script>
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(true)
+
+    @Html.HiddenFor(model => model.RmsTrans.COMPID, new { @Value = compid })
+    <div class="container">
+        <div class="row">
+            <div class="col-md-2"></div>
+            <div class="col-md-8">
+                <div class="panel panel-info" style="padding: 0px; margin-bottom: 0px;">
+                    <div class="panel-heading text-center">
+                        <h3>Sales Statement (Details)</h3>
+                    </div>
+                </div>
+
+                <div class="jumbotron" style="padding-top: 20px; padding-bottom: 11px">
+
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-md-4">
+                                @Html.Label("name", "From Date:    ")
+                            </div>
+                            <div class="col-md-8">
+                                @Html.TextBoxFor(model => model.FromDate, htmlAttributes: new { id = "fromDate", @class = "form-control", @Value = DateTime.Now.ToString("dd-MMM-yyyy") })
+                            </div>
+                        </div>
+                        @if (ViewBag.ErrorFromDateMessage != null)
+                        {
+                            <div class="row">
+                                <div class="col-md-4"></div>
+                                <div class="col-md-8">
+                                    <h6 style="color: #C03523">@ViewBag.ErrorFromDateMessage</h6>
+                                </div>
+                            </div>
+                        }
+
+                        <br />
+                        <div class="row">
+                            <div class="col-md-4">
+                                @Html.Label("name", "To Date:    ")
+                            </div>
+                            <div class="col-md-8">
+                                @Html.TextBoxFor(model => model.ToDate, htmlAttributes: new { id = "toDate", @class = "form-control", @Value = DateTime.Now.ToString("dd-MMM-yyyy") })
+                            </div>
+                        </div>
+                        @if (ViewBag.ErrorToDateMessage != null)
+                        {
+                            <div class="row">
+                                <div class="col-md-4"></div>
+                                <div class="col-md-8">
+                                    <h6 style="color: #C03523">@ViewBag.ErrorToDateMessage </h6>
+                                </div>
+                            </div>
+                        }
+
+
+                        <br />
+                        <div class="row">
+                            <div class="col-md-4"></div>
+                            <div class="col-md-8">
+                                @if (ViewBag.ErrorFromDateMessage != null || ViewBag.ErrorToDateMessage != null || TempData["ErrorMessageItemWiseSalesSummery"] != null)
+                                {
+                                    <input type="submit" class="btn btn-success" value="Print Sales Statement" />
+                                }
+                                else
+                                {
+                                    <input type="submit" class="btn btn-success" value="Print Sales Statement" formtarget="_blank" />
+                                }
+
+                            </div>
+                        </div>
+                        @if (TempData["ErrorMessageItemWiseSalesSummery"] != null)
+                        {
+                            <div class="row">
+                                <div class="col-md-4"></div>
+                                <div class="col-md-8">
+                                    <h5 style="color: #C03523">@TempData["ErrorMessageItemWiseSalesSummery"]</h5>
+                                </div>
+                            </div>
+                        }
+
+                    </div>
+                </div>
+
+            </div>
+            <div class="col-md-2"></div>
+        </div>
+
+    </div>
+
+
+    <script type="text/javascript">
+
+        $('#fromDate').datepicker({
+            format: "dd-M-yyyy"
+            //format: "yyyy-M-dd"
+        });
+
+        $('#toDate').datepicker({
+            format: "dd-M-yyyy"
+            //format: "yyyy-M-dd"
+        });
+
+    </script>
+
+}
+

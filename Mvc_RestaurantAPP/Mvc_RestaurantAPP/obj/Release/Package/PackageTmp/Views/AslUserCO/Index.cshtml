@@ -1,0 +1,113 @@
+﻿@using System.Data
+@using System.Data.SqlClient
+
+@{
+
+    var LoggedUserTp = HttpContext.Current.Session["LoggedUserType"].ToString();
+    var LoggedCompId = HttpContext.Current.Session["loggedCompID"].ToString();
+    var LoggedUserStatus = HttpContext.Current.Session["LoggedUserStatus"].ToString();
+    var loggedUserID = HttpContext.Current.Session["loggedUserID"].ToString();
+
+    var createStatus = "";
+    var updateStatus = "";
+    var deleteStatus = "";
+    var status = "";
+
+    System.Data.SqlClient.SqlConnection conn = new System.Data.SqlClient.SqlConnection(System.Configuration.ConfigurationManager.ConnectionStrings["RestaurantDbContext"].ToString());
+
+    string query = string.Format("SELECT STATUS, INSERTR, UPDATER, DELETER FROM ASL_ROLE WHERE  CONTROLLERNAME='AslUserCo' AND COMPID='{0}' AND USERID = '{1}'", LoggedCompId, loggedUserID);
+
+    System.Data.SqlClient.SqlCommand cmd = new System.Data.SqlClient.SqlCommand(query, conn);
+    conn.Open();
+
+    SqlDataAdapter da = new SqlDataAdapter(cmd);
+    DataTable ds = new DataTable();
+    da.Fill(ds);
+
+    foreach (DataRow row in ds.Rows)
+    {
+        status = row["STATUS"].ToString();
+        createStatus = row["INSERTR"].ToString();
+        updateStatus = row["UPDATER"].ToString();
+        deleteStatus = row["DELETER"].ToString();
+    }
+
+    conn.Close();
+}
+
+
+
+<div class="container">
+
+    <ul class="nav nav-tabs" role="tablist">
+        @if (createStatus == 'A'.ToString() && updateStatus == 'A'.ToString() && deleteStatus == 'A'.ToString())
+        {
+            <li role="presentation" class="active"><input type="button" value="Create" data-url="@Url.Action("Create", "AslUserCo", new { area = "tab1" })" /></li>
+            <li role="presentation"><input type="button" value="Update" data-url="@Url.Action("UpdateForm", "AslUserCo", new { area = "tab2" })" /></li>
+            <li role="presentation"><input type="button" value="Delete" data-url="@Url.Action("DeleteForm", "AslUserCo", new { area = "tab3" })" /></li>
+        }
+        else if (createStatus == 'A'.ToString())
+        {
+            <li role="presentation" class="active"><input type="button" value="Create" data-url="@Url.Action("Create", "AslUserCo", new { area = "tab1" })" /></li>
+        }
+        else if (updateStatus == 'A'.ToString())
+        {
+            <li role="presentation"><input type="button" value="Update" data-url="@Url.Action("UpdateForm", "AslUserCo", new { area = "tab2" })" /></li>
+        }
+        else if (deleteStatus == 'A'.ToString())
+        {
+            <li role="presentation"><input type="button" value="Delete" data-url="@Url.Action("DeleteForm", "AslUserCo", new { area = "tab3" })" /></li>
+        }
+        else if (updateStatus == 'A'.ToString() && deleteStatus == 'A'.ToString())
+        {
+            <li role="presentation"><input type="button" value="Update" data-url="@Url.Action("UpdateForm", "AslUserCo", new { area = "tab2" })" /></li>
+            <li role="presentation"><input type="button" value="Delete" data-url="@Url.Action("DeleteForm", "AslUserCo", new { area = "tab3" })" /></li>
+        }
+        else if (createStatus == 'A'.ToString() && updateStatus == 'A'.ToString())
+        {
+            <li role="presentation" class="active"><input type="button" value="Create" data-url="@Url.Action("Create", "AslUserCo", new { area = "tab1" })" /></li>
+            <li role="presentation"><input type="button" value="Update" data-url="@Url.Action("UpdateForm", "AslUserCo", new { area = "tab2" })" /></li>
+        }
+    </ul>
+
+</div>
+
+
+<div id="load">
+    @if (TempData["UserCreationMessage"] != null)
+    {
+        <div class="panel-heading text-center">
+            <h4>@TempData["UserCreationMessage"]</h4>
+        </div>
+    }
+    else if (TempData["UserUpdateMessage"] != null)
+    {
+        <div class="panel-heading text-center">
+            <h4>@TempData["UserUpdateMessage"]</h4>
+        </div>
+    }
+    else if (TempData["UserDeleteMessage"] != null)
+    {
+        <div class="panel-heading text-center">
+            <h4>@TempData["UserDeleteMessage"]</h4>
+        </div>
+    }
+</div>
+
+<script>
+    $(function () {
+        $(':button').click(function () {
+            $.ajax({
+                url: $(this).data('url'),
+                type: 'GET',
+                cache: false,
+                contentType: "application/html; charset=utf-8",
+                success: function (result) {
+                    $('#load').html(result);
+                }
+            });
+            return false;
+        });
+    });
+
+</script>

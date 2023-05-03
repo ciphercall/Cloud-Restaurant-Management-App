@@ -1,0 +1,112 @@
+﻿@model IEnumerable<Mvc_RestaurantAPP.Models.AslCompany>
+
+@{
+    ViewBag.Title = "Index";
+
+    if (HttpContext.Current.Session["LoggedUserType"] == null)
+    {
+        Response.Redirect(Url.Action("Index", "Login"));
+    }
+    
+    var LoggedUserTp = HttpContext.Current.Session["LoggedUserType"].ToString();
+    var LoggedUserStatus = HttpContext.Current.Session["LoggedUserStatus"].ToString();
+    if (LoggedUserTp == "AslSuperadmin" && LoggedUserStatus == "A")
+    {
+
+    }
+    else
+    {
+        Response.Redirect(Url.Action("Index", "Login"));
+    }
+
+}
+
+@*<h2>Index</h2>*@
+
+<div></div>
+
+@*<div class="container">
+    <div class="row">
+        <div class="col-md-2"></div>
+        <div class="col-md-8">
+            <div class="panel panel-info" style="padding: 0px;">
+                <div class="panel-heading text-center">
+                    <h4>Show all Company Information</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>*@
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-1"></div>
+        <div class="col-md-12">
+            <div class="panel panel-primary">
+                <div class="panel-heading text-center">Company List</div>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <tr>
+                            <th>
+                                @Html.DisplayNameFor(model => model.COMPID)
+                            </th>
+                            <th>
+                                @Html.DisplayNameFor(model => model.COMPNM)
+                            </th>
+                            <th>
+                                @Html.DisplayNameFor(model => model.ADDRESS)
+                            </th>
+                            <th>
+                                @Html.DisplayNameFor(model => model.CONTACTNO)
+                            </th>
+                            <th>
+                                @Html.DisplayNameFor(model => model.EMAILID)
+                            </th>
+                            <th>
+                                @Html.DisplayNameFor(model => model.WEBID)
+                            </th>
+                            <th>
+                                @Html.DisplayNameFor(model => model.STATUS)
+                            </th>
+                            <th></th>
+                        </tr>
+
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.COMPID)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.COMPNM)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.ADDRESS)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.CONTACTNO)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.EMAILID)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.WEBID)
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.STATUS)
+                                </td>
+                                <td>
+                                    @Html.ActionLink("Edit", "Edit", new { id = item.AslCompanyId }) |
+                                    @Html.ActionLink("Details", "Details", new { id = item.AslCompanyId }) 
+                                    @*@Html.ActionLink("Delete", "Delete", new { id = item.AslCompanyId })*@
+                                </td>
+                            </tr>
+                        }
+
+                    </table>
+                </div>
+            </div>
+            </div>
+        <div class="col-md-1"></div>     
+    </div>
+</div>

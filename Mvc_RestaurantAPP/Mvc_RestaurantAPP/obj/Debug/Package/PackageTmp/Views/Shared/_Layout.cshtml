@@ -1,0 +1,311 @@
+﻿@using System.Data
+@using System.Data.SqlClient
+@using Mvc_RestaurantAPP.Models
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Alchemy Software | Restaurant Billing</title>
+    <link href="~/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+
+
+    <link href="~/Content/bootstrap-3.2.0-dist/css/bootstrap.css" rel="stylesheet" />
+    <link href="~/Content/bootstrap-3.2.0-dist/css/bootstrap-theme.css" rel="stylesheet" />
+    <script src="~/Content/bootstrap-3.2.0-dist/js/jquery-2.1.0.min.js"></script>
+    <script src="~/Content/bootstrap-3.2.0-dist/js/bootstrap.js"></script>
+    @*font-awesome "Glyphicons"*@
+    <link href="~/Content/font-awesome-4.2.0/css/font-awesome.css" rel="stylesheet" />
+    @*bootstrap -Clock Picker*@
+    <link href="~/Content/bootstrap-clock%20picker/src/clockpicker.css" rel="stylesheet" />
+    <script src="~/Content/bootstrap-clock%20picker/src/clockpicker.js"></script>
+    <link href="~/Content/bootstrap-clock%20picker/src/standalone.css" rel="stylesheet" />
+
+
+    @*@Styles.Render("~/Content/css")
+        @Scripts.Render("~/bundles/modernizr")*@
+</head>
+<body>
+    <header>
+        <div>
+
+            <nav class="navbar navbar-default navbar-fixed-top">
+                <div class="container">
+                    <div class="navbar-header">
+                        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                        </button>
+                        <a class="navbar-brand" target="_blank" href="../Home/">
+                            <i class="fa fa-play-circle"></i><span>  Alchemy </span>  Software
+                        </a>
+                        @*<img class="img-responsive" src="../../Images/Restaurant/1.png" />*@
+                    </div>
+
+                    <div class="navbar-collapse collapse">
+                        @if (HttpContext.Current.Session["LoggedUserType"] != null && HttpContext.Current.Session["LoggedUserType"].ToString() == "AslSuperadmin" && HttpContext.Current.Session["LoggedUserStatus"].ToString() == "A")
+                        {
+                            <ul class="nav navbar-nav">
+                                <li class="dropdown">
+                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown">Input Form <b class="caret"></b></a>
+                                    <ul class="dropdown-menu">
+                                        <li>@Html.ActionLink("Company Creation", "Create", "AslCompany")</li>
+                                        <li class="divider"></li>
+                                        <li>@Html.ActionLink("Create Menu List", "Index", "ASL_MENU")</li>
+                                    </ul>
+                                </li>
+
+                                <li class="dropdown">
+                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown">Information Form<b class="caret"></b></a>
+                                    <ul class="dropdown-menu">
+                                        <li>@Html.ActionLink("Company Information", "Index", "AslCompany")</li>
+                                        <li> @Html.ActionLink("List of Companies User", "SearchCompanyList", "AslUserCo")</li>
+                                        <li class="divider"></li>
+                                        <li> @Html.ActionLink("Show Module Information", "ShowModuleList", "ASL_MENU")</li>
+                                        <li> @Html.ActionLink("Show Menu Information", "ShowMenuList", "ASL_MENU")</li>
+                                        <li> @Html.ActionLink("Show User Role Information", "ViewRoleList", "ASL_ROLE")</li>
+                                    </ul>
+                                </li>
+                            </ul>
+
+                            <ul class="nav navbar-nav navbar-right">
+                                <li>
+                                    <a style="font-weight: bold">
+                                        Mr. @HttpContext.Current.Session["LoggedUserName"].ToString()
+                                    </a>
+                                </li>
+                                <li>
+                                    <a></a>
+                                </li>
+
+                                <li>
+                                    <a class="btn btn-info" href="/logout">Logout</a>
+                                </li>
+                            </ul>
+                        }
+
+
+                        else if (HttpContext.Current.Session["LoggedUserType"] != null && (HttpContext.Current.Session["LoggedUserType"].ToString() == "CompanyAdmin" || HttpContext.Current.Session["LoggedUserType"].ToString() == "UserAdmin" || HttpContext.Current.Session["LoggedUserType"].ToString() == "User") && HttpContext.Current.Session["LoggedUserStatus"].ToString() == "A")
+                        {
+                            //User(Forms) Dynamic Menu
+                            foreach (var a in (IEnumerable<ASL_ROLE>)ViewData["validUserForm"])
+                            {
+                                if (a.STATUS == "A")
+                                {
+                                    ViewData["ActiveUserForm"] = a.STATUS;
+                                }
+                            }
+
+                            //User(Report) Dynamic Menu
+                            foreach (var a in (IEnumerable<ASL_ROLE>)ViewData["validUserReports"])
+                            {
+                                if (a.STATUS == "A")
+                                {
+                                    ViewData["ActiveUserReport"] = a.STATUS;
+                                }
+                            }
+
+                            //Billing(Forms) Dynamic Menu
+                            foreach (var a in (IEnumerable<ASL_ROLE>)ViewData["validBillingForm"])
+                            {
+                                if (a.STATUS == "A")
+                                {
+                                    ViewData["ActiveBillingForm"] = a.STATUS;
+                                }
+                            }
+
+                            //Biling(Report) Dynamic Menu
+                            foreach (var a in (IEnumerable<ASL_ROLE>)ViewData["validBillingReports"])
+                            {
+                                if (a.STATUS == "A")
+                                {
+                                    ViewData["ActiveBillingReports"] = a.STATUS;
+                                }
+                            }
+
+
+
+
+                            <ul class="nav navbar-nav">
+                                @if (ViewData["validUserForm"] != null && ViewData["ActiveUserForm"] != null)
+                                {
+                                    <li class="dropdown">
+                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown">User(Form)<b class="caret"></b></a>
+                                        <ul class="dropdown-menu">
+                                            @foreach (var c in (IEnumerable<ASL_ROLE>)ViewData["validUserForm"])
+                                            {
+                                                <li> @Html.ActionLink(c.MENUNAME, c.ACTIONNAME, c.CONTROLLERNAME) </li>
+                                            }
+
+                                        </ul>
+                                    </li>
+                                }
+
+                                @if (ViewData["validUserReports"] != null && ViewData["ActiveUserReport"] != null)
+                                {
+                                    <li class="dropdown">
+                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown">User(Report)<b class="caret"></b></a>
+                                        <ul class="dropdown-menu">
+                                            @foreach (var c in (IEnumerable<ASL_ROLE>)ViewData["validUserReports"])
+                                            {
+                                                @*<li> @Html.ActionLink(c.MENUNAME, c.ACTIONNAME, c.CONTROLLERNAME, "", new { target = "_blank" }) </li>*@
+                                                <li> @Html.ActionLink(c.MENUNAME, c.ACTIONNAME, c.CONTROLLERNAME) </li>
+                                            }
+
+                                        </ul>
+                                    </li>
+                                }
+
+                                @if (ViewData["validBillingForm"] != null && ViewData["ActiveBillingForm"] != null)
+                                {
+                                    <li class="dropdown">
+                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown">Billing(Form)<b class="caret"></b></a>
+                                        <ul class="dropdown-menu">
+                                            @foreach (var c in (IEnumerable<ASL_ROLE>)ViewData["validBillingForm"])
+                                            {
+                                                <li> @Html.ActionLink(c.MENUNAME, c.ACTIONNAME, c.CONTROLLERNAME) </li>
+                                            }
+
+                                        </ul>
+                                    </li>
+                                }
+
+                                @if (ViewData["validBillingReports"] != null && ViewData["ActiveBillingReports"] != null)
+                                {
+                                    <li class="dropdown">
+                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown">Billing(Report)<b class="caret"></b></a>
+                                        <ul class="dropdown-menu">
+                                            @foreach (var c in (IEnumerable<ASL_ROLE>)ViewData["validBillingReports"])
+                                            {
+                                                if (c.ACTIONNAME == "GetCategoryReport" && c.CONTROLLERNAME == "BillingReport")
+                                                {
+                                                     <li>@Html.ActionLink("Listed Items", "GetCategoryReport", "BillingReport", "", new { target = "_blank" })</li>                                                   
+                                                }
+                                                else
+                                                {
+                                                    <li> @Html.ActionLink(c.MENUNAME, c.ACTIONNAME, c.CONTROLLERNAME) </li>
+                                                }
+                                                
+                                            }
+
+                                        </ul>
+                                    </li>
+                                }
+                            </ul>
+
+                            <ul class="nav navbar-nav navbar-right">
+                                @*@if (HttpContext.Current.Session["LoggedUserType"] != null && HttpContext.Current.Session["LoggedUserType"].ToString() == "CompanyAdmin")
+                                    {
+                                         <li class="dropdown">
+                                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown">Reports<b class="caret"></b></a>
+                                            <ul class="dropdown-menu">
+                                                <li>@Html.ActionLink("User Log Data", "GetCompanyUserLogData", "UserReport", "", new { target = "_blank" })</li>
+                                                <li>@Html.ActionLink("Category wise item", "GetCategoryReport", "UserReport")</li>
+                                            </ul>
+                                        </li>
+                                    }*@
+
+                                @if (HttpContext.Current.Session["LoggedUserType"] != null && (HttpContext.Current.Session["LoggedUserType"].ToString() == "CompanyAdmin") && HttpContext.Current.Session["LoggedUserStatus"].ToString() == "A")
+                                {
+                                    <li class="dropdown">
+                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown"><span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span><b class="caret"></b></a>
+                                        <ul class="dropdown-menu">
+                                            <li>@Html.ActionLink("User Permission", "Index", "ASL_ROLE")</li>
+                                            <li class="divider"></li>
+                                            <li>@Html.ActionLink("Search User Information", "SearchUserList", "AslUserCo")</li>
+                                            <li>@Html.ActionLink("Show Category List", "ShowCategoryList", "CategoryItem")</li>
+                                        </ul>
+                                    </li>
+                                }
+
+                                <li class="dropdown">
+                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" data-hover="dropdown"><i class="fa fa-user"></i><b class="caret"></b></a>
+                                    <ul class="dropdown-menu">
+                                        <li>@Html.ActionLink("Update Password", "PasswordChangedForm", "Password")</li>
+                                    </ul>
+                                </li>
+
+                                <li>
+                                    <a style="font-weight: bold">
+                                        Mr. @HttpContext.Current.Session["LoggedUserName"].ToString()
+                                    </a>
+                                </li>
+                                <li>
+                                    <a></a>
+                                </li>
+
+                                <li>
+                                    <a class="btn btn-info" href="/logout">Logout</a>
+                                </li>
+                            </ul>
+                        }
+
+                        else
+                        {
+                            <ul class="nav navbar-nav "></ul>
+                            <ul class="nav navbar-nav navbar-right">
+                                <li>
+                                    <a class="btn btn-info" href="../Login/">Login</a>
+                                </li>
+                            </ul>
+
+                        }
+                    </div>
+
+                </div>
+            </nav>
+        </div>
+    </header>
+
+
+    @if (TempData["BrackFieldDropFromLayout_AslUserCOController"] != null)
+    {
+        @*<br />*@
+    }
+    else
+    {
+        <br />
+        <br />
+        <br />
+    }
+
+
+    @*<div class="contai">
+            @RenderSection("featured", required: false)
+            <section class="content-wrapper main-content clear-fix">
+                @RenderBody()
+            </section>
+
+        </div>*@
+    @RenderSection("featured", required: false)
+    @RenderBody()
+    @*<br />
+        <br />
+        <footer>
+            <div class="container">
+                <div class="col-md-12">
+                    <div class="row">
+                        <p>Copyright &copy;@DateTime.Now.Year-Alchemy Software</p>
+                    </div>
+                </div>
+            </div>
+        </footer>*@
+
+
+    @*@Scripts.Render("~/bundles/jquery")*@
+    @RenderSection("scripts", required: false)
+
+
+    <script src="~/Scripts/bootstrap-hover-dropdown.js"></script>
+    <script>
+        // very simple to use!
+        $(document).ready(function () {
+            $('.js-activated').dropdownHover().dropdown();
+        });
+    </script>
+</body>
+</html>

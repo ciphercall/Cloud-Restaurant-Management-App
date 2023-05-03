@@ -1,0 +1,281 @@
+﻿@using Mvc_RestaurantAPP.Models
+@model IEnumerable<Mvc_RestaurantAPP.Models.BillingReportViewModel>
+
+@{
+    ViewBag.Title = "GetTransactionMemoReports_SmallSize";
+    Layout = null;
+
+    if (HttpContext.Current.Session["LoggedUserType"] == null)
+    {
+        Response.Redirect(Url.Action("Index", "Login"));
+    }
+    
+    var LoggedUserTp = HttpContext.Current.Session["LoggedUserType"].ToString();
+    var LoggedUserStatus = HttpContext.Current.Session["LoggedUserStatus"].ToString();
+    var LoggedCompanyStatus = HttpContext.Current.Session["LoggedCompanyStatus"].ToString();
+
+    if ((LoggedUserTp == "CompanyAdmin" || LoggedUserTp == "UserAdmin" || LoggedUserTp == "User") && LoggedUserStatus == "A" && LoggedCompanyStatus == "A")
+    {
+
+    }
+    else
+    {
+        Response.Redirect(Url.Action("Index", "Login"));
+    }
+
+    Int64 compid = Convert.ToInt64(System.Web.HttpContext.Current.Session["loggedCompID"]);
+    string companyName = "";
+    RestaurantDbContext db = new RestaurantDbContext();
+    var SelectUserName = from n in db.AslCompanyDbSet
+                         where n.COMPID == compid
+                         select new { companyName = n.COMPNM };
+
+    foreach (var n in SelectUserName)
+    {
+        companyName = n.companyName;
+    }
+
+    var compNm = companyName;
+
+    string MemoNo = Convert.ToString(ViewBag.InvoiceNo);
+
+    Decimal discountAmount = 0, totalGrossAmount = 0, vatAmount = 0, serviceCharge = 0, TotalNet = 0;
+    var Rms_TransMstfound = from n in db.RmsTransmstDbSet
+                            where n.COMPID == compid && n.TRANSNO == MemoNo
+                            select new { n.DISCAMTG, n.TOTGROSS, n.VATAMT, n.SCHARGE, n.TOTNET };
+
+    foreach (var a in Rms_TransMstfound)
+    {
+        discountAmount = Convert.ToDecimal(a.DISCAMTG);
+        totalGrossAmount = Convert.ToDecimal(a.TOTGROSS);
+        vatAmount = Convert.ToDecimal(a.VATAMT);
+        serviceCharge = Convert.ToDecimal(a.SCHARGE);
+        TotalNet = Convert.ToDecimal(a.TOTNET);
+    }
+
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<body>
+    <table class="table" width="100%" widths="1.5;2;1.5;5">
+        <tr>
+            <th></th>
+            <th align="center" valign="top">
+                <h4 style="color: #226699">@compNm</h4>
+            </th>
+            <th></th>
+            <th></th>
+        </tr>
+    </table>
+
+    <table class="table" width="100%" cellpadding="2.0" cellspacing="3.0">
+        <tr><th></th></tr>
+    </table>
+
+    <table class="table" width="100%" widths="1.5;1.1;2.4;5">
+        <tr>
+            <th><h6 style="color:black" valign="top">Sales Memo</h6></th>
+            <th></th>
+            <th><h6>Date: @DateTime.Now.ToString("dd/MM/yyyy hh:mm tt")</h6></th>
+            <th></th>
+        </tr>
+    </table>
+
+    <table class="table" width="100%" cellpadding="3.0" cellspacing="3.0">
+        <tr><th></th></tr>
+    </table>
+
+    <table class="table" width="100%" widths="0.5;1.5;1;1;1;5">
+        <tr>
+            <th>
+                <h6>Date:</h6>
+            </th>
+            <th>
+                <h6 style="font-weight: bold">@ViewBag.Date</h6>
+            </th>
+            <th></th>
+            <th>
+                <h6>Invoice:</h6>
+            </th>
+            <th>
+                <h6 style="font-weight: bold"> @ViewBag.InvoiceNo</h6>
+            </th>
+            <th></th>
+        </tr>
+    </table>
+
+    @*for height*@
+    <table class="table" width="100%" cellpadding="1.0" cellspacing="1.5">
+        <tr><th></th></tr>
+    </table>
+
+    <table style="float:left !important;margin-left: 20px !important;" border="0" width="100%" cellpadding="1.0" cellspacing="1.0" widths="2;1;2;5" left="true" right="true" top="true" bottom="true" red="0" green="0" blue="0">
+        <tr>
+            @*<th align="center">
+                    Date
+                </th>
+                <th align="center">
+                    Memo No
+                </th>*@
+            <td borderwidth="0.5" left="true" right="true" top="true" bottom="true" horizontalalign="Center">
+                <h6>Item Name</h6>
+            </td>
+            @*<th align="center">
+                    Item ID
+                </th>*@
+            <td borderwidth="0.5" left="true" right="true" top="true" bottom="true" horizontalalign="Center">
+                <h6>Qty</h6>
+            </td>
+            @*<th align="center">
+                    <h6>Rate</h6>
+                </th>
+                <th align="center">
+                    <h6>Amount</h6>
+                </th>
+                <th align="center">
+                    <h6>Discount</h6>
+                </th>*@
+            <td borderwidth="0.5" left="true" right="true" top="true" bottom="true" horizontalalign="Center">
+                <h6>Amount</h6>
+            </td>
+            <td borderwidth="0" left="false" right="false" top="false" bottom="false" horizontalalign="Center"></td>
+        </tr>
+    </table>
+    @{
+        Decimal totalGross = 0;
+    }
+    <table border="0" class="table" width="100%" cellpadding="1.0" cellspacing="1.5" widths="2;1;2;5">
+        @foreach (var item in Model)
+        {
+            <tr>
+                @*<td>
+                        <h6> @Html.DisplayFor(modelItem => item.Date)</h6>
+                    </td>
+                    <td>
+                        <h6> @Html.DisplayFor(modelItem => item.MemoNo)</h6>
+                    </td>*@
+                <td>
+                    <h6><strong>@Html.DisplayFor(modelItem => item.ItemName)</strong></h6>
+                </td>
+                @*<td align="right">
+                        <h6> @Html.DisplayFor(modelItem => item.ItemID)</h6>
+                    </td>*@
+                <td align="right">
+                    <h6> @Html.DisplayFor(modelItem => item.Quantity)</h6>
+                </td>
+                @*<td align="right">
+                        <h6> @Html.DisplayFor(modelItem => item.Rate)</h6>
+                    </td>
+                    <td align="right">
+                        <h6> @Html.DisplayFor(modelItem => item.Amount)</h6>
+                    </td>
+                    <td align="right">
+                        <h6> @Html.DisplayFor(modelItem => item.DiscountAmount)</h6>
+                    </td>*@
+                <td align="right">
+                    <h6> @Html.DisplayFor(modelItem => item.GrossAmount)</h6>
+                </td>
+                <td></td>
+            </tr>
+            totalGross = totalGross + Convert.ToDecimal(item.GrossAmount);
+        }
+    </table>
+
+    <table class="table" width="100%" cellpadding="3.0" cellspacing="3.0">
+        <tr><th></th></tr>
+    </table>
+
+    <table class="table" width="100%" cellpadding="1.0" cellspacing="1.5" widths="2;1;2;5">
+        <tr>
+            <td></td>
+            <td align="right"><strong>Total:</strong></td>
+            <td align="right">
+                <h6>@totalGross</h6>
+            </td>
+            <td></td>
+        </tr>
+    </table>
+    
+    <table class="table" width="100%" cellpadding="2.0" cellspacing="2.0">
+        <tr><th></th></tr>
+    </table>
+
+    <table class="table" width="100%" cellpadding="1.0" cellspacing="1.5" widths="1;2;2;5">
+        <tr>
+            <td></td>
+            <td align="right"><strong>Discount:</strong></td>
+            <td align="right">
+                <h6>@discountAmount</h6>
+            </td>
+            <td></td>
+        </tr>
+    </table>
+    <table class="table" width="100%" cellpadding="1.0" cellspacing="1.5" widths="0.5;2.5;2;5">
+        <tr>
+            <td></td>
+            <td align="right"><strong>Gross Amount:</strong></td>
+            <td align="right">
+                <h6>@totalGrossAmount</h6>
+            </td>
+            <td></td>
+        </tr>
+    </table>
+    <table class="table" width="100%" cellpadding="1.0" cellspacing="1.5" widths="2;1;2;5">
+        <tr>
+            <td></td>
+            <td align="right"><strong>Vat:</strong></td>
+            <td align="right">
+                <h6>@vatAmount</h6>
+            </td>
+            <td></td>
+        </tr>
+    </table>
+    <table class="table" width="100%" cellpadding="1.0" cellspacing="1.5" widths="0.5;2.5;2;5">
+        <tr>
+            <td></td>
+            <td align="right"><strong>Service Charge:</strong></td>
+            <td align="right">
+                <h6>@serviceCharge</h6>
+            </td>
+            <td></td>
+        </tr>
+    </table>
+    <table class="table" width="100%" cellpadding="0.2" cellspacing="1.0" widths="0.5;2.5;2;5">
+        <tr>
+            <td></td>
+            <td align="right"><strong>Net Amount:</strong></td>
+            <td align="right">
+                <h6>@TotalNet</h6>
+            </td>
+            <td></td>
+        </tr>
+    </table>
+
+    <table class="table" width="100%" cellpadding="0.1" cellspacing="0.1" widths="0.5;2.5;2;5">
+        <tr>
+            <td></td>
+            <td></td>
+            <td colspan="1">
+                <hr />
+            </td>
+            <td></td>
+        </tr>
+    </table>
+
+    <table class="table" width="100%" cellpadding="3.0" cellspacing="3.0" widths="1.5;2;1.5;5">
+        <tr>
+            <th></th>
+            <th align="center" valign="top">
+                <h5>THANK YOU</h5>
+            </th>
+            <th></th>
+            <th></th>
+        </tr>
+    </table>
+</body>
+</html>
+
+
+
+

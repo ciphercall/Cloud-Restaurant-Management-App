@@ -1,0 +1,152 @@
+﻿@using Mvc_RestaurantAPP.Models
+@*@model IEnumerable<Mvc_RestaurantAPP.Models.RMS_ITEM>*@
+@model Mvc_RestaurantAPP.Models.RMS_ITEM
+
+@{
+    ViewBag.Title = "GetCategoryReport";
+    Layout = null;
+
+    if (HttpContext.Current.Session["LoggedUserType"] == null)
+    {
+        Response.Redirect(Url.Action("Index", "Login"));
+    }
+    
+    var LoggedUserTp = HttpContext.Current.Session["LoggedUserType"].ToString();
+    var LoggedUserStatus = HttpContext.Current.Session["LoggedUserStatus"].ToString();
+    var LoggedCompanyStatus = HttpContext.Current.Session["LoggedCompanyStatus"].ToString();
+
+    if ((LoggedUserTp == "CompanyAdmin" || LoggedUserTp == "UserAdmin" || LoggedUserTp == "User") && LoggedUserStatus == "A" && LoggedCompanyStatus == "A")
+    {
+
+    }
+    else
+    {
+        Response.Redirect(Url.Action("Index", "Login"));
+    }
+
+    RestaurantDbContext db = new RestaurantDbContext();
+    Int64 companyID = Convert.ToInt64(System.Web.HttpContext.Current.Session["loggedCompID"]);
+
+    Int64 minCategoryId = Convert.ToInt64((from n in db.PosItemMstDbSet where companyID == n.COMPID select n.CATID).Min());
+    Int64 maxCategoryId = Convert.ToInt64((from n in db.PosItemMstDbSet where companyID == n.COMPID select n.CATID).Max());
+
+    string companyName = "";
+    var comp = from n in db.AslCompanyDbSet
+               where n.COMPID == companyID
+               select new { companyName = n.COMPNM };
+
+    foreach (var n in comp)
+    {
+        companyName = n.companyName;
+    }
+
+    var compNm = companyName;
+
+}
+
+<!DOCTYPE html>
+<html>
+<body>
+    <table class="table" width="100%">
+        <tr>
+            <th align="center" valign="top">
+                <h2 style="color: #226699">@compNm</h2>
+            </th>
+        </tr>
+    </table>
+    
+    <table class="table" width="100%" cellpadding="4.0" cellspacing="3.0" widths="7;7;7">
+        <tr>
+            <td>Listed Items</td>
+            <td></td>
+            <td><h6>Print Date: @DateTime.Now.ToString("dd-MMM-yyyy hh:mm tt")</h6></td>
+        </tr>
+    </table>
+    <table class="table" width="100%" cellpadding="1.0" cellspacing="1.5">
+        <tr><th></th></tr>
+    </table>
+
+    @for (Int64 i = minCategoryId; i <= maxCategoryId; i++)
+    {
+        string categoryName = "";
+        Int64 categoryId = 0;
+        var CategoryInfo = from n in db.PosItemMstDbSet
+                           where n.COMPID == companyID && n.CATID == i
+                           select new { catName = n.CATNM, catId = n.CATID };
+
+        foreach (var n in CategoryInfo)
+        {
+            categoryName = n.catName;
+            categoryId = Convert.ToInt64(n.catId);
+        }
+        var categoryNM = categoryName;
+        var categoryID = categoryId;
+
+        List<RMS_ITEM> rmsItems = new List<RMS_ITEM>();
+        rmsItems = db.RmsItemDbSet.Where(e => e.COMPID == companyID && e.CATID == i).ToList();
+
+
+        <table class="table" width="100%" cellpadding="3.0">
+            <tr>
+                <th style="color: black">
+                    @categoryNM
+                </th>
+            </tr>
+        </table>
+
+        <table border="1" class="table" width="100%" cellpadding="1.0" cellspacing="0.0" widths="5;2;1.5;2;2;2.5;1.5">
+            <tr>
+                <th align="center">
+                    <h6>Item Name</h6>
+                </th>
+                <th align="center">
+                    <h6>Brand</h6>
+                </th>
+                <th align="center">
+                    <h6>Unit</h6>
+                </th>
+                <th align="center">
+                    <h6>Buy Rate</h6>
+                </th>
+                <th align="center">
+                    <h6>Sale Rate</h6>
+                </th>
+                <th align="center">
+                    <h6>Stock Minimum</h6>
+                </th>
+                <th align="center">
+                    <h6>Discount</h6>
+                </th>
+            </tr>
+
+            @foreach (var item in rmsItems)
+            {
+                <tr>
+                    <td>
+                        <h6>@Html.DisplayFor(modelItem => item.ITEMNM)</h6>
+                    </td>
+                    <td>
+                        <h6>@Html.DisplayFor(modelItem => item.BRAND)</h6>
+                    </td>
+                    <td align="center">
+                        <h6>@Html.DisplayFor(modelItem => item.UNIT)</h6>
+                    </td>
+                    <td align="right">
+                        <h6>@Html.DisplayFor(modelItem => item.BUYRT)</h6>
+                    </td>
+                    <td align="right">
+                        <h6>@Html.DisplayFor(modelItem => item.SALRT)</h6>
+                    </td>
+                    <td align="center">
+                        <h6>@Html.DisplayFor(modelItem => item.STKMIN)</h6>
+                    </td>
+                    <td align="right">
+                        <h6>@Html.DisplayFor(modelItem => item.DISCOUNT)</h6>
+                    </td>
+                </tr>
+            }
+
+        </table>
+    }
+</body>
+</html>

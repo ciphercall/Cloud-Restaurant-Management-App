@@ -1,0 +1,795 @@
+﻿@using System.Web.Services.Discovery
+@using Mvc_RestaurantAPP.Models
+@model Mvc_RestaurantAPP.Models.CategoryItemModel
+
+
+@{
+    ViewBag.Title = "Index";
+
+    if (HttpContext.Current.Session["LoggedUserType"] == null)
+    {
+        Response.Redirect(Url.Action("Index", "Login"));
+    }
+
+    var LoggedUserTp = HttpContext.Current.Session["LoggedUserType"].ToString();
+    var LoggedCompId = HttpContext.Current.Session["loggedCompID"].ToString();
+    var LoggedUserStatus = HttpContext.Current.Session["LoggedUserStatus"].ToString();
+    var LoggedCompanyStatus = HttpContext.Current.Session["LoggedCompanyStatus"].ToString();
+
+    if ((LoggedUserTp == "CompanyAdmin" || LoggedUserTp == "UserAdmin" || LoggedUserTp == "User") && LoggedUserStatus == "A" && LoggedCompanyStatus == "A")
+    {
+
+    }
+    else
+    {
+        Response.Redirect(Url.Action("Index", "Login"));
+    }
+
+    RestaurantDbContext db = new RestaurantDbContext();
+
+    Int64 compid = Convert.ToInt64(System.Web.HttpContext.Current.Session["loggedCompID"]);
+    List<SelectListItem> category = new List<SelectListItem>();
+    var result = (from n in db.PosItemMstDbSet
+                  where n.COMPID == compid
+                  select n).ToList();
+
+    foreach (var n in result)
+    {
+        POS_ITEMMST posItemMst = db.PosItemMstDbSet.FirstOrDefault(e => e.CATID == n.CATID);
+        category.Add(new SelectListItem { Text = posItemMst.CATNM, Value = posItemMst.CATID.ToString() });
+    }
+
+
+    //var transno = Convert.ToInt64(HttpContext.Current.Session["transno"].ToString());
+    string transno = "";
+
+    decimal totGross = 0;
+    decimal totAmt = 0;
+
+
+    int i = 1;
+
+
+
+
+    List<SelectListItem> listTransMode = new List<SelectListItem>();
+    listTransMode.Add(new SelectListItem { Text = "Cash", Value = "cash" });
+    listTransMode.Add(new SelectListItem { Text = "Card", Value = "card" });
+}
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(true)
+
+
+    @Html.HiddenFor(model => model.RmsTrans.COMPID, new { id = "txtCompId", @Value = LoggedCompId })
+    @Html.HiddenFor(model => model.RmsTrans.ITEMSL, new { id = "txtItemSl" })
+    @Html.HiddenFor(model => model.RmsTrans.ITEMID, new { id = "txtItemId" })
+
+    <div class="container">
+
+        @*<div class="panel panel-info">
+                <div class="panel-heading text-center">
+                    <h2>Order Item</h2>
+                </div>
+            </div>*@
+
+        @*<div class="well">*@
+        <div class="form-group">
+
+            <div class="row">
+                <div class="col-md-8">
+
+                    <div class="panel panel-info" style="padding: 0px">
+                        <div class="panel-heading text-center">
+                            <h4>New Order Information</h4>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-2">
+                            <span><b>  Mode </b> </span>
+                            <input type="submit" class="btn btn-success" value="Edit" id="btnEdit" name="command" style="padding: 3px; padding-left: 24px; padding-right: 24px" />
+                            @if (ViewBag.UpdatePermission != null)
+                            {
+                                <h5 style="color: #C03523">@ViewBag.UpdatePermission</h5>
+                            }
+                        </div>
+
+                        <div class="col-md-2">
+                            <span> <b>  Date</b></span>
+                            @Html.TextBoxFor(model => model.RmsTrans.TRANSDT, new { @class = "form-control input-sm", @readonly = "readonly", @Value = DateTime.Now.ToString("dd-MMM-yyyy") })
+                        </div>
+
+                        <div class="col-md-3">
+                            <span> <b>  Memo No</b></span>
+                            @Html.TextBoxFor(model => model.RmsTrans.TRANSNO, new { id = "txtTransNo", @class = "form-control input-sm", @readonly = "readonly" })
+                        </div>
+
+                        <div class="col-md-5">
+                            <span> <b>Table Name </b></span>
+
+                            @Html.TextBoxFor(model => model.RmsTrans.TABLENO, new { @class = "form-control input-sm", id = "txtTableNo" })
+                            @if (ViewBag.TableNO != null)
+                            {
+                                <h6 style="color: #C03523">@ViewBag.TableNO</h6>
+                            }
+                        </div>
+                    </div>
+
+                    <br />
+
+                    <div class="row">
+                        @Html.HiddenFor(model => model.RmsTrans.RMS_TRANSid)
+
+                        <div class="col-md-2">
+                            <span> @Html.Label("name", "Category", htmlAttributes: new { @class = "control-label" })</span>
+                            @Html.DropDownListFor(model => model.PosItemmstModel.CATID, category, "-Select-", new { id = "txtCatID", @class = "form-control input-sm" })
+                        </div>
+                        <div class="col-md-5">
+                            <span> @Html.Label("name", "Item Name", htmlAttributes: new { @class = "control-label" })</span>
+                            @Html.TextBoxFor(model => model.RmsItemModel.ITEMNM, new { @class = "form-control input-sm", id = "txtItemNm" })
+                            @if (ViewBag.errorItemid != null)
+                            {
+                                <h6 style="color: #C03523">@ViewBag.errorItemid</h6>
+                            }
+                        </div>
+                        <div class="col-md-2">
+                            <span>  @Html.Label("name", "Quantity", htmlAttributes: new { @class = "control-label" })</span>
+                            @Html.TextBoxFor(model => model.RmsTrans.QTY, new { @class = "form-control input-sm", id = "txtQty" })
+                            @if (ViewBag.errorQty != null)
+                            {
+                                <h6 style="color: #C03523">@ViewBag.errorQty</h6>
+                            }
+                        </div>
+                        @*<div class="col-md-1">
+                            </div>*@
+
+                        @Html.TextBoxFor(model => model.RmsTrans.INSLTUDE, new { id = "latlon", style = "display: none;" })
+                        <input id="lat" type="hidden" />
+                        <input id="lon" type="hidden" />
+
+                        <div class="col-md-3" style="text-align: right">
+                            <br />
+                            <input type="submit" class="btn btn-info" value="Add" id="btnAdd" name="command" style="padding-left: 35px;padding-right: 35px;" />
+                            @if (ViewBag.InsertPermission != null)
+                            {
+                                <h5 style="color: #C03523">@ViewBag.InsertPermission</h5>
+                            }
+                        </div>
+
+                    </div>
+
+
+
+                    <div class="row">
+                        @*@if (ViewBag.errorItemid != null)
+                            {
+                                <div class="col-md-2">
+
+                                </div>
+                                <div class="col-md-3">
+                                    <h6 style="color: #C03523">@ViewBag.errorItemid<i style="color: #C03523" class="fa fa-question-circle fa-1x"></i></h6>
+                                </div>
+                                <div class="col-md-2">
+                                    <span>  @Html.Label("name", "Discount", htmlAttributes: new { @class = "control-label" })</span>
+                                    @Html.TextBoxFor(model => model.RmsTrans.DISCRT, new { @class = "form-control input-sm", id = "txtDscRT", @readonly = "readonly" })
+                                </div>
+                                <div class="col-md-2">
+                                    <span>  @Html.Label("name", "Amount", htmlAttributes: new { @class = "control-label" })</span>
+                                    @Html.TextBoxFor(model => model.RmsTrans.DISCAMT, new { @class = "form-control input-sm", id = "txtDscAmt", @readonly = "readonly" })
+                                </div>
+                                <div class="col-md-2">
+                                    <span>  @Html.Label("name", "Gross", htmlAttributes: new { @class = "control-label" })</span>
+                                    @Html.TextBoxFor(model => model.RmsTrans.GROSSAMT, new { @class = "form-control input-sm", id = "txtGrossAmt", @readonly = "readonly" })
+                                </div>
+                            }
+                            else
+                            {*@
+                        @*<div class="col-md-5">
+                            </div>*@
+                        <div class="col-md-2">
+                            <span>  @Html.Label("name", "Rate", htmlAttributes: new { @class = "control-label" })</span>
+                            @Html.TextBoxFor(model => model.RmsTrans.RATE, new { @class = "form-control input-sm", id = "txtRate", @readonly = "readonly" })
+                        </div>
+                        <div class="col-md-3">
+                            <span>  @Html.Label("name", "Amount", htmlAttributes: new { @class = "control-label" })</span>
+                            @Html.TextBoxFor(model => model.RmsTrans.AMOUNT, new { @class = "form-control input-sm", id = "txtAmt", @readonly = "readonly" })
+                        </div>
+                        <div class="col-md-2">
+                            <span>  @Html.Label("name", "Discount(%)", htmlAttributes: new { @class = "control-label" })</span>
+                            @Html.TextBoxFor(model => model.RmsTrans.DISCRT, new { @class = "form-control input-sm", id = "txtDscRT", @readonly = "readonly" })
+                        </div>
+                        <div class="col-md-2">
+                            <span>  @Html.Label("name", "Discount", htmlAttributes: new { @class = "control-label" })</span>
+                            @Html.TextBoxFor(model => model.RmsTrans.DISCAMT, new { @class = "form-control input-sm", id = "txtDscAmt", @readonly = "readonly" })
+                        </div>
+                        <div class="col-md-3">
+                            <span>  @Html.Label("name", "Gross Amount", htmlAttributes: new { @class = "control-label" })</span>
+                            @Html.TextBoxFor(model => model.RmsTrans.GROSSAMT, new { @class = "form-control input-sm", id = "txtGrossAmt", @readonly = "readonly" })
+                        </div>
+                        @*}*@
+
+                    </div>
+
+
+                    <br />
+                    <br />
+
+
+                    @if (TempData["transno"] != null)
+                    {
+                        transno = Convert.ToString(TempData["transno"]);
+                        //List<RMS_TRANS> aslTrans = new List<RMS_TRANS>();
+                        //aslTrans = db.AslRmsTransDbSet.Where(e => e.COMPID == compid && e.TRANSNO == transno).ToList();
+
+                        var res = db.RmsItemDbSet.Join(db.RmsTransDbSet, e => e.ITEMID, b => b.ITEMID,
+                            (e, b) => new
+                            {
+                                itemname = e.ITEMNM,
+                                RMS_TRANSid = b.RMS_TRANSid,
+                                ITEMSL = b.ITEMSL,
+                                ITEMID = b.ITEMID,
+                                QTY = b.QTY,
+                                RATE = b.RATE,
+                                AMOUNT = b.AMOUNT,
+                                DISCRT = b.DISCRT,
+                                DISCAMT = b.DISCAMT,
+                                GROSSAMT = b.GROSSAMT,
+                                TRANSNO = b.TRANSNO,
+                                COMPID = b.COMPID
+                            }).Where(eAndb => eAndb.TRANSNO == transno && eAndb.COMPID == compid).OrderBy(e => e.ITEMSL);
+
+
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <tr>
+                                    @*<td></td>*@
+                                    <td>
+                                        <h6>SL</h6>
+                                    </td>
+                                    @*<td></td>*@
+                                    <td>
+                                        <h6>Item Name</h6>
+                                    </td>
+                                    <td>
+                                        <h6>Quantity</h6>
+                                    </td>
+                                    @*<td></td>*@
+                                    <td>
+                                        <h6>Amount</h6>
+                                    </td>
+                                    @*<td></td>*@
+                                    <td>
+                                        <h6>Discount Amount</h6>
+                                    </td>
+                                    <td>
+                                        <h6>Gross Amount</h6>
+                                    </td>
+
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                @foreach (var item in res)
+                                {
+                                    <tr>
+                                        @Html.HiddenFor(model => item.RMS_TRANSid, new { id = "txtID", @readonly = "readonly" })
+                                        @Html.HiddenFor(model => item.ITEMID, new { id = "txtItemId", @readonly = "readonly" })
+                                        @Html.HiddenFor(model => item.RATE, new { id = "txtRate", @readonly = "readonly" })
+                                        @Html.HiddenFor(model => item.DISCRT, new { id = "txtDscRT", @readonly = "readonly" })
+                                        @*<td>
+                                                @Html.HiddenFor(model => item.RMS_TRANSid, new { id = "txtID", @readonly = "readonly" })
+                                            </td>*@
+                                        <td>
+                                            @Html.TextBoxFor(model => item.ITEMSL, new { style = "width:2em;", id = "txtItemSl", @readonly = "readonly" })
+                                        </td>
+                                        @*<td>
+                                                @Html.HiddenFor(model => item.ITEMID, new { id = "txtItemId", @readonly = "readonly" })
+                                            </td>*@
+                                        <td>
+                                            @Html.TextBoxFor(model => item.itemname, new { style = "width:12em;", id = "txtItemNm", @readonly = "readonly" })
+                                        </td>
+                                        <td>
+                                            @Html.TextBoxFor(model => item.QTY, new { style = "width:4em; text-align:right", id = "txtQty", @readonly = "readonly" })
+                                        </td>
+                                        @*<td>
+                                                @Html.HiddenFor(model => item.RATE, new { id = "txtRate", @readonly = "readonly" })
+                                            </td>*@
+                                        <td>
+                                            @Html.TextBoxFor(model => item.AMOUNT, new { style = "width:6em; text-align:right", id = "txtAmt", @readonly = "readonly" })
+                                        </td>
+                                        @*<td>
+                                                @Html.HiddenFor(model => item.DISCRT, new { id = "txtDscRT", @readonly = "readonly" })
+                                            </td>*@
+                                        <td>
+                                            @Html.TextBoxFor(model => item.DISCAMT, new { style = "width:6em; text-align:right", id = "txtDscAmt", @readonly = "readonly" })
+                                        </td>
+
+                                        <td>
+                                            @Html.TextBoxFor(model => item.GROSSAMT, new { style = "width: 7em; text-align:right", id = "txtGrossAmt", @readonly = "readonly" })
+                                        </td>
+
+                                        <td>
+                                            <span>
+                                                <a href="@Url.Action("OrderDelete", new { tid = item.RMS_TRANSid, orderNo = item.TRANSNO, itemsl = item.ITEMSL, compid = item.COMPID, item })" class="btn btn-sm btn-danger">
+                                                    <span class="glyphicon glyphicon-remove"></span>
+                                                </a>
+                                            </span>
+                                            @*@Html.ActionLink("✘", "OrderDelete", new { tid = item.RMS_TRANSid, orderNo = item.TRANSNO, itemsl = item.ITEMSL, item }, new { id = "btnDel", @class = "btn btn-sm btn-danger" })*@
+                                        </td>
+                                        <td>
+                                            @*@Html.ActionLink("✔", "OrderUpdate", new { tid = item.RMS_TRANSid, orderNo = item.TRANSNO, itemsl = item.ITEMSL, itemId = item.ITEMID, item }, new { id = "btnUp", @class = "btn btn-sm btn-info" })*@
+                                            <span>
+                                                <a href="@Url.Action("OrderUpdate", new { tid = item.RMS_TRANSid, orderNo = item.TRANSNO, itemsl = item.ITEMSL, itemId = item.ITEMID, item })" class="btn btn-sm btn-info">
+                                                    <span class="glyphicon glyphicon-pencil"></span>
+                                                </a>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    totGross = Convert.ToDecimal(totGross + item.GROSSAMT);
+                                    totAmt = Convert.ToDecimal(totAmt + item.AMOUNT);
+                                    i = i + 1;
+                                }
+                                <tr>
+                                    <td></td>
+
+                                    <td>Total</td>
+
+                                    @*<td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>*@
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td>
+                                        @Html.TextBoxFor(model => model.RmsTransMst.TOTAMT, new { style = "width:7em; text-align:right", id = "txtTotGrossAmt", @readonly = "readonly", @Value = totGross })
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped"></table>
+                        </div>
+                    }
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <div class="panel panel-info" style="padding: 0px">
+                        <div class="panel-heading text-center">
+                            <h4>Payment Information</h4>
+                        </div>
+                    </div>
+
+                    <div class="well">
+                        <div class="table-responsive">
+                            @if (ViewBag.addItemList != null)
+                            {<table>
+                                <tr>
+                                    <td>
+                                        <h6 style="color: #C03523">@ViewBag.addItemList</h6>
+                                    </td>
+                                </tr>
+                            </table>
+                            }
+                            <table class="table table-hover">
+                                <tr>
+                                    <td>
+                                        Total Amount
+                                    </td>
+                                    <td>
+                                        @Html.TextBoxFor(model => model.RmsTransMst.TOTAMT, new { @style = "width:12em; text-align:right", id = "txtMstTotAmt", @readonly = "readonly", @Value = totGross })
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        Discount (%)
+                                    </td>
+                                    <td>
+                                        @Html.TextBoxFor(model => model.RmsTransMst.DISCRTG, new { @style = "width:12em; text-align:right", id = "txtMstDiscRate", @Value = 0 })
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        Discount Amount
+                                    </td>
+                                    <td>
+                                        @Html.TextBoxFor(model => model.RmsTransMst.DISCAMTG, new { @style = "width:12em; text-align:right", id = "txtMstDiscAmt", @Value = 0 })
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        Gross Amount
+                                    </td>
+                                    <td>
+                                        @Html.TextBoxFor(model => model.RmsTransMst.TOTGROSS, new { @style = "width:12em; text-align:right", id = "txtMstTotGross", @readonly = "readonly", @Value = 0 })
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        Vat (%)
+                                    </td>
+                                    <td>
+                                        @Html.TextBoxFor(model => model.RmsTransMst.VATRT, new { @style = "width:12em; text-align:right", id = "txtMstVatRT", @Value = 0 })
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        Vat Amount
+                                    </td>
+                                    <td>
+                                        @Html.TextBoxFor(model => model.RmsTransMst.VATAMT, new { @style = "width:12em; text-align:right", id = "txtMstVatAmt", @readonly = "readonly", @Value = 0 })
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        Service Charge
+                                    </td>
+                                    <td>
+                                        @Html.TextBoxFor(model => model.RmsTransMst.SCHARGE, new { @style = "width:12em; text-align:right", id = "txtMstServiceAmt", @Value = 0 })
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        Net Amount
+                                    </td>
+                                    <td>
+                                        @Html.TextBoxFor(model => model.RmsTransMst.TOTNET, new { @style = "width:12em; text-align:right", id = "txtMstNetAmount", @readonly = "readonly", @Value = totGross })
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <table>
+                                <tr>
+                                    <td style="width: 46%;"></td>
+                                    <td>
+                                        <input type="submit" class="btn btn-danger" value="Save" id="btnComp" name="command" />
+                                        <input type="submit" class="btn btn-primary" name="command" value="POS" data-toggle="tooltip" data-placement="bottom" title="Paper size small" />
+                                        <input type="submit" class="btn btn-success" name="command" value="A4" data-toggle="tooltip" data-placement="bottom" title="Paper size A4" />
+                                    </td>
+                                </tr>
+                            </table>
+
+
+                        </div>
+                    </div>
+
+
+
+                    @Html.TextBoxFor(model => model.RmsTransMst.INSLTUDE, new { id = "latlon_RmsTransMst", style = "display: none;" })
+                    <input id="lat" type="hidden" />
+                    <input id="lon" type="hidden" />
+
+
+                    <div class="well">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <tr>
+                                    <td>
+                                        Mode of Payment
+                                    </td>
+                                    <td>
+                                        @Html.DropDownListFor(model => model.RmsTransMst.TRMODE, listTransMode, new { id = "txtTransMode", @class = "form-control input-sm" })
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        Customer Name
+                                    </td>
+                                    <td>
+                                        @Html.TextBoxFor(model => model.RmsTransMst.CUSTNM, new { @class = "form-control input-sm" })
+                                        @if (ViewBag.CustomerName != null)
+                                        {
+                                            <h6 style="color: #C03523">@ViewBag.CustomerName</h6>
+                                        }
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        Mobile No
+                                    </td>
+                                    <td>
+                                        @Html.TextBoxFor(model => model.RmsTransMst.CMOBNO, new { @class = "form-control input-sm" })
+                                        @if (ViewBag.MobileNo != null)
+                                        {
+                                            <h6 style="color: #C03523">@ViewBag.MobileNo</h6>
+                                        }
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        Email ID
+                                    </td>
+                                    <td>
+                                        @Html.TextBoxFor(model => model.RmsTransMst.CEMAILID, new { @class = "form-control input-sm" })
+                                    </td>
+                                </tr>
+
+                            </table>
+                            <table>
+                                <tr>
+                                    <th style='text-align:right;vertical-align:middle'>
+                                        <input type="submit" class="btn btn-warning" value="Complete" id="btnComp" name="command" />
+                                    </th>
+                                </tr>
+                            </table>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+                                        //Latitute & longitude
+                                        <script src="http://maps.google.com/maps/api/js?sensor=false"></script>
+
+                                        <script language="javascript" type="text/javascript">
+                                            $(function () {
+                                                navigator.geolocation.getCurrentPosition(showPosition);
+                                                //navigator.geolocation.getCurrentPosition(showPosition, positionError);
+
+                                                function showPosition(position) {
+                                                    var coordinates = position.coords;
+                                                    $("#lat").val(coordinates.latitude);
+                                                    $("#lon").val(coordinates.longitude);
+
+                                                    $("#latlon").val(
+                                                        $("#lat").val() + "," + $("#lon").val()
+                                                    );
+                                                    $("#latlon_RmsTransMst").val(
+                                                      $("#lat").val() + "," + $("#lon").val()
+                                                  );
+                                                }
+                                            });
+
+                                            $(function () {
+                                                $('[data-toggle="tooltip"]').tooltip()
+                                            });
+                                        </script>
+
+                                        @*<script type="text/javascript">
+
+                                                $(document).ready(function () {
+                                                    $('#txtItemNm').autocomplete(
+                                                        {
+                                                            source: '@Url.Action("TagSearch", "Transaction")',
+
+                                                            change: txtOneChanged
+                                                        });
+                                                });
+
+                                                function txtOneChanged() {
+
+                                                    //var changedDropDown = $('#txtCatID option:selected').val();
+
+                                                    var changedText = $("#txtItemNm").val();
+                                                    var txtBox = document.getElementById('txtItemId');
+                                                    var txtRate = document.getElementById('txtRate');
+                                                    var txtDscRT = document.getElementById('txtDscRT');
+                                                    var txtqty = document.getElementById('txtQty');
+                                                    $.getJSON(
+                                                        '/Transaction/ItemNameChanged', { "ChangedText": changedText },
+                                                        function (result) {
+                                                            txtBox.value = result.itemid;
+                                                            txtRate.value = result.rate;
+                                                            txtDscRT.value = result.discount;
+                                                            txtqty.value = result.qty;
+
+
+
+                                                            var myBox1 = document.getElementById('txtQty').value;
+                                                            var myBox2 = document.getElementById('txtRate').value;
+                                                            var txtAmt = document.getElementById('txtAmt');
+                                                            var txtDscAmt = document.getElementById('txtDscAmt');
+                                                            var txtGrossAmt = document.getElementById('txtGrossAmt');
+
+                                                            var myBox3 = document.getElementById('txtDscRT').value;
+
+                                                            var tottxtAmt = (myBox1 * myBox2);
+                                                            txtAmt.value = tottxtAmt;
+
+                                                            txtDscAmt.value = tottxtAmt * myBox3 / 100;
+
+                                                            txtGrossAmt.value = tottxtAmt - txtDscAmt.value;
+
+                                                            document.getElementById("txtQty").focus();
+                                                        });
+                                                }
+                                            </script>*@
+
+
+                                        <script type="text/javascript">
+
+                                            $(document).ready(function () {
+                                                $('#txtItemNm').autocomplete(
+                                                    {
+                                                        source: function (request, response) {
+                                                            $.ajax({
+                                                                url: '@Url.Action("TagSearch", "Transaction")',
+                                                                dataType: "json",
+                                                                data: {
+                                                                    term: request.term,
+                                                                    changedDropDown: $('#txtCatID option:selected').val()
+                                                                },
+                                                                success: function (data) {
+                                                                    //response(data);
+                                                                    response($.map(data, function (item) {
+                                                                        return {
+                                                                            label: item,
+                                                                            value: item
+                                                                        };
+                                                                    }));
+                                                                }
+                                                            });
+                                                        },
+
+                                                        change: txtOneChanged
+                                                    });
+                                            });
+
+                                            function txtOneChanged() {
+
+                                                //var changedDropDown = $('#txtCatID option:selected').val();
+
+                                                var changedText = $("#txtItemNm").val();
+                                                var txtBox = document.getElementById('txtItemId');
+                                                var txtRate = document.getElementById('txtRate');
+                                                var txtDscRT = document.getElementById('txtDscRT');
+                                                var txtqty = document.getElementById('txtQty');
+                                                $.getJSON(
+                                                    '/Transaction/ItemNameChanged', { "ChangedText": changedText },
+                                                    function (result) {
+                                                        txtBox.value = result.itemid;
+                                                        txtRate.value = result.rate;
+                                                        txtDscRT.value = result.discount;
+                                                        txtqty.value = result.qty;
+
+
+
+                                                        var myBox1 = document.getElementById('txtQty').value;
+                                                        var myBox2 = document.getElementById('txtRate').value;
+                                                        var txtAmt = document.getElementById('txtAmt');
+                                                        var txtDscAmt = document.getElementById('txtDscAmt');
+                                                        var txtGrossAmt = document.getElementById('txtGrossAmt');
+
+                                                        var myBox3 = document.getElementById('txtDscRT').value;
+
+                                                        var tottxtAmt = (myBox1 * myBox2);
+                                                        txtAmt.value = tottxtAmt;
+
+                                                        txtDscAmt.value = tottxtAmt * myBox3 / 100;
+
+                                                        txtGrossAmt.value = tottxtAmt - txtDscAmt.value;
+
+                                                        document.getElementById("txtQty").focus();
+                                                    });
+                                            }
+                                        </script>
+
+
+
+
+                                        <script>
+
+                                            //$('#txtCatID').change(function () {
+
+                                            //    var changedDropDown = $('#txtCatID option:selected').val();
+                                            //    var txtItemName = document.getElementById('txtItemNm');
+
+                                            //    $.getJSON(
+                                            //        "/Transaction/DropDownSelect_ItemName", { "ChangedDropDown": changedDropDown },
+                                            //        function (myData) {
+                                            //            txtItemName.value = myData;
+                                            //            document.getElementById("txtQty").focus();
+                                            //       });
+                                            //});
+
+
+
+                                            $("#txtQty").change(function () {
+
+                                                var myBox1 = document.getElementById('txtQty').value;
+                                                var myBox2 = document.getElementById('txtRate').value;
+                                                var txtAmt = document.getElementById('txtAmt');
+                                                var txtDscAmt = document.getElementById('txtDscAmt');
+                                                var txtGrossAmt = document.getElementById('txtGrossAmt');
+
+                                                var myBox3 = document.getElementById('txtDscRT').value;
+
+                                                var tottxtAmt = (myBox1 * myBox2);
+                                                txtAmt.value = tottxtAmt;
+
+                                                txtDscAmt.value = tottxtAmt * myBox3 / 100;
+
+                                                txtGrossAmt.value = tottxtAmt - txtDscAmt.value;
+
+                                                document.getElementById("btnAdd").focus();
+                                            });
+
+
+
+                                            $("#btnAdd").change(function () {
+                                                document.getElementById("txtQty").focus();
+                                            });
+
+                                        </script>
+
+
+                                        <script>
+
+                                            $("#txtMstDiscRate").change(function () {
+
+
+                                                document.getElementById('txtMstDiscAmt').value = (document.getElementById('txtMstTotAmt').value * (document.getElementById('txtMstDiscRate').value / 100)).toFixed(2);
+
+                                                document.getElementById('txtMstTotGross').value = (document.getElementById('txtMstTotAmt').value - document.getElementById('txtMstDiscAmt').value).toFixed(2);
+
+                                                document.getElementById('txtMstVatAmt').value = (document.getElementById('txtMstTotGross').value * (document.getElementById('txtMstVatRT').value / 100)).toFixed(2);
+
+                                                document.getElementById('txtMstNetAmount').value = (parseFloat(document.getElementById('txtMstTotGross').value) + parseFloat(document.getElementById('txtMstVatAmt').value) + parseFloat(document.getElementById('txtMstServiceAmt').value)).toFixed(2);
+
+
+                                            });
+
+
+                                            $("#txtMstDiscAmt").change(function () {
+
+                                                document.getElementById('txtMstDiscRate').value = 0;
+
+                                                // document.getElementById('txtMstDiscAmt').value = (document.getElementById('txtMstTotAmt').value * (document.getElementById('txtMstDiscRate').value / 100)).toFixed(2);
+
+                                                document.getElementById('txtMstTotGross').value = (document.getElementById('txtMstTotAmt').value - document.getElementById('txtMstDiscAmt').value).toFixed(2);
+
+                                                document.getElementById('txtMstVatAmt').value = (document.getElementById('txtMstTotGross').value * (document.getElementById('txtMstVatRT').value / 100)).toFixed(2);
+
+                                                document.getElementById('txtMstNetAmount').value = (parseFloat(document.getElementById('txtMstTotGross').value) + parseFloat(document.getElementById('txtMstVatAmt').value) + parseFloat(document.getElementById('txtMstServiceAmt').value)).toFixed(2);
+
+                                            });
+
+
+                                            $("#txtMstVatRT").change(function () {
+
+
+                                                //  document.getElementById('txtMstDiscAmt').value = (document.getElementById('txtMstTotAmt').value * (document.getElementById('txtMstDiscRate').value / 100)).toFixed(2);
+
+                                                document.getElementById('txtMstTotGross').value = (document.getElementById('txtMstTotAmt').value - document.getElementById('txtMstDiscAmt').value).toFixed(2);
+
+                                                document.getElementById('txtMstVatAmt').value = (document.getElementById('txtMstTotGross').value * (document.getElementById('txtMstVatRT').value / 100)).toFixed(2);
+
+                                                document.getElementById('txtMstNetAmount').value = (parseFloat(document.getElementById('txtMstTotGross').value) + parseFloat(document.getElementById('txtMstVatAmt').value) + parseFloat(document.getElementById('txtMstServiceAmt').value)).toFixed(2);
+                                            });
+
+
+                                            $("#txtMstServiceAmt").change(function () {
+
+
+                                                // document.getElementById('txtMstDiscAmt').value = (document.getElementById('txtMstTotAmt').value * (document.getElementById('txtMstDiscRate').value / 100)).toFixed(2);
+
+                                                document.getElementById('txtMstTotGross').value = (document.getElementById('txtMstTotAmt').value - document.getElementById('txtMstDiscAmt').value).toFixed(2);
+
+                                                document.getElementById('txtMstVatAmt').value = (document.getElementById('txtMstTotGross').value * (document.getElementById('txtMstVatRT').value / 100)).toFixed(2);
+
+                                                document.getElementById('txtMstNetAmount').value = (parseFloat(document.getElementById('txtMstTotGross').value) + parseFloat(document.getElementById('txtMstVatAmt').value) + parseFloat(document.getElementById('txtMstServiceAmt').value)).toFixed(2);
+
+                                            });
+
+                                        </script>
+
+}
+
+<link href="~/Content/themes/base/jquery-ui.css" rel="stylesheet" />
+<link href="~/Content/jquery.jqGrid/ui.jqgrid.css" rel="stylesheet" />
+<script src="~/Scripts/jquery-1.9.1.min.js"></script>
+<script src="~/Scripts/jquery-ui-1.10.4.min.js"></script>
+<script src="~/Scripts/i18n/grid.locale-en.js"></script>
+<script src="~/Scripts/jquery.jqGrid.min.js"></script>
+
